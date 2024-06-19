@@ -10,28 +10,29 @@
       pkgs = inputs.nixpkgs.legacyPackages.${system};
       stdenv = pkgs.llvmPackages.stdenv;
 
-      drv = let
-        pname = "LSGT2shift";
+      pname = "LSGT2shift";
+      drv = stdenv.mkDerivation {
+        inherit pname;
         version = "v0.1.0";
-      in
-        stdenv.mkDerivation {
-          inherit pname version;
 
-          src = with pkgs.lib.fileset;
-            toSource {
-              root = ./.;
-              fileset = unions [
-                ./LSGT2shift.c
-                ./build.sh
-              ];
-            };
+        src = with pkgs.lib.fileset;
+          toSource {
+            root = ./.;
+            fileset = unions [
+              ./LSGT2shift.c
+              ./build.sh
+            ];
+          };
 
-          buildPhase = ''$SHELL build.sh'';
-          installPhase = ''install -Dm755 LSGT2shift $out/bin/LSGT2shift'';
-        };
+        buildPhase = ''$SHELL build.sh'';
+        installPhase = ''install -Dm755 LSGT2shift $out/bin/LSGT2shift'';
+      };
     in rec {
-      packages.default = packages.LSGT2shift;
-      packages.LSGT2shift = drv;
+      packages.default = packages.${pname};
+      packages.${pname} = drv;
+
+      overlays.default = overlays.${pname};
+      overlays.${pname} = _: _: {${pname} = packages.default;};
 
       devShells.default = (pkgs.mkShell.override {inherit stdenv;}) {
         inputsFrom = [drv];
