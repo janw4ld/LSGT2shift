@@ -8,17 +8,42 @@ are weird.
 
 ## Usage
 
-`LSGT2shift` is an [Interception Tools](https://gitlab.com/interception/linux/tools)
-plugin. Refer to that project's README for information on installation and
-usage. An example `udevmon` configuration:
+example setups:
+
+### using the nixos module:
+
+```nix
+{inputs, ...}: {
+  imports = [inputs.lsgt2shift.nixosModules.${system}.default];
+  janw4ld.LSGT2shift.enable = true;
+}
+```
+
+### composing caps2esc with LSGT2shift:
+
+```nix
+{pkgs, lib, inputs, ...}: {
+  imports = [inputs.lsgt2shift.nixosModules.${system}.default];
+  janw4ld.LSGT2shift.enable = true;
+  services.interception-tools.udevmonConfig = with pkgs; let
+    intercept = lib.getExe' interception-tools "intercept";
+    uinput = lib.getExe' interception-tools "uinput";
+    lsgt2shift = lib.getExe LSGT2shift;
+    caps2esc = lib.getExe interception-tools-plugins.caps2esc;
+  in
+    builtins.toJSON [{
+      JOB = "${intercept} -g $DEVNODE | ${lsgt2shift} | ${caps2esc} -m0 | ${uinput} -d $DEVNODE";
+      DEVICE.EVENTS.EV_KEY = ["KEY_CAPSLOCK" "KEY_ESC" "KEY_102ND"];
+    }];
+}
+```
+
+### `udevmon.yaml`:
 
 ``` yaml
-- JOB: "intercept -g $DEVNODE | casp2esc -m0 | LSGT2shift | uinput -d $DEVNODE"
+- JOB: "intercept -g $DEVNODE | LSGT2shift | uinput -d $DEVNODE"
   DEVICE:
     EVENTS:
-      EV_KEY:
-       - KEY_CAPSLOCK
-       - KEY_ESC
-       - KEY_102ND
+      EV_KEY: [KEY_102ND]
 ```
 
