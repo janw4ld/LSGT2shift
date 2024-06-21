@@ -10,7 +10,7 @@
       pkgs = inputs.nixpkgs.legacyPackages.${system};
       stdenv = pkgs.llvmPackages.stdenv;
 
-      pname = "LSGT2shift";
+      pname = "lsgt2shift";
       drv = stdenv.mkDerivation {
         inherit pname;
         version = "v0.1.0";
@@ -19,13 +19,13 @@
           toSource {
             root = ./.;
             fileset = unions [
-              ./LSGT2shift.c
               ./build.sh
+              (fileFilter (file: file.hasExt "c" || file.hasExt "h") ./.)
             ];
           };
 
         buildPhase = ''$SHELL build.sh'';
-        installPhase = ''install -Dm755 LSGT2shift $out/bin/LSGT2shift'';
+        installPhase = ''install -Dm755 ${pname} $out/bin/${pname}'';
 
         meta.mainProgram = pname;
       };
@@ -39,27 +39,36 @@
       packages.${pname} = drv;
 
       overlays.default = overlays.${pname};
-      overlays.${pname} = _: _: {${pname} = packages.default;};
+      overlays.${pname} = _: prev: {
+        interception-tools-plugins =
+          prev.interception-tools-plugins // {${pname} = packages.default;};
+      };
 
       nixosModules.default = nixosModules.${pname};
-      nixosModules.${pname} = {config, pkgs, lib, ...}: {
-        options.janw4ld.LSGT2shift.enable =
-          lib.mkEnableOption "LSGT2shift interception-tools plugin";
+      nixosModules.${pname} = {
+        config,
+        pkgs,
+        lib,
+        ...
+      }: {
+        options.janw4ld.lsgt2shift.enable =
+          lib.mkEnableOption "enable lsgt2shift interception-tools plugin";
 
-        config = lib.mkIf config.janw4ld.LSGT2shift.enable {
+        config = lib.mkIf config.janw4ld.lsgt2shift.enable {
           nixpkgs.overlays = [overlays.default];
           services.interception-tools = {
             enable = lib.mkDefault true;
-            plugins = [pkgs.${pname}];
             udevmonConfig = with pkgs; let
               intercept = lib.getExe' interception-tools "intercept";
               uinput = lib.getExe' interception-tools "uinput";
-              lsgt2shift = lib.getExe pkgs.${pname};
+              lsgt2shift = lib.getExe pkgs.interception-tools-plugins.${pname};
             in
-              lib.mkDefault (builtins.toJSON [{
-                JOB = "${intercept} -g $DEVNODE | ${lsgt2shift} | ${uinput} -d $DEVNODE";
-                DEVICE.EVENTS.EV_KEY = ["KEY_CAPSLOCK" "KEY_ESC" "KEY_102ND"];
-              }]);
+              lib.mkDefault (builtins.toJSON [
+                {
+                  JOB = "${intercept} -g $DEVNODE | ${lsgt2shift} | ${uinput} -d $DEVNODE";
+                  DEVICE.EVENTS.EV_KEY = ["KEY_102ND"];
+                }
+              ]);
           };
         };
       };
