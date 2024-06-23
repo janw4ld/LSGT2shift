@@ -1,8 +1,8 @@
 # LSGT2shift
 
 An [Interception Tools](https://gitlab.com/interception/linux/tools) plugin
-that replaces the LSGT key (AKA 102nd key, AKA extra backslash, AKA extra ><)
-with left shift.
+that replaces the [LSGT key](https://man.archlinux.org/man/xkeyboard-config.7#Key_to_choose_the_2nd_level)
+(AKA 102nd key, AKA extra backslash, AKA extra <>) with left shift.
 
 ![before](./README.d/layout-before.png)
 
