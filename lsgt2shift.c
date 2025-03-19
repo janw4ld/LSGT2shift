@@ -2,7 +2,6 @@
 #include <stdlib.h>
 
 #include <linux/input.h>
-#include <unistd.h>
 
 int read_event(struct input_event *event) {
     return fread(event, sizeof(struct input_event), 1, stdin) == 1;
@@ -20,12 +19,8 @@ int main(void) {
 
     while (read_event(&input)) {
         if (input.type == EV_KEY && input.code == KEY_102ND) {
-            struct input_event lshift = {
-                .type = EV_KEY, .code = KEY_LEFTSHIFT, .value = input.value};
-            write_event(&lshift);
-            continue;
+            input.code = KEY_LEFTSHIFT;
         }
-
         write_event(&input);
     }
 }

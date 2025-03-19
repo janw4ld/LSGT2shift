@@ -8,12 +8,12 @@
   outputs = inputs:
     inputs.flake-utils.lib.eachDefaultSystem (system: let
       pkgs = inputs.nixpkgs.legacyPackages.${system};
-      stdenv = pkgs.llvmPackages.stdenv;
+      stdenv = pkgs.pkgsMusl.stdenv;
 
       pname = "lsgt2shift";
       drv = stdenv.mkDerivation {
         inherit pname;
-        version = "v0.1.0";
+        version = "v1.0.0";
 
         src = with pkgs.lib.fileset;
           toSource {
